@@ -58,6 +58,16 @@ class Database:
         connection.close()
 
     def insert_meeting(self, meet_id, admin_id, date, duration, name, description):
+        '''
+        Важно: смотреть на формат date!
+        :param meet_id: int
+        :param admin_id: str
+        :param date: str, format '%Y-%m-%d %H:%M:%S'
+        :param duration: int, minutes
+        :param name: str
+        :param description: str
+        :return: none
+        '''
         connection = self.get_connection()
         connection.execute(
             "INSERT INTO meetings "
