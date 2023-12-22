@@ -20,6 +20,7 @@ class Database:
             CREATE TABLE IF NOT EXISTS meetings (
             meet_id INTEGER,
             admin_id TEXT,
+            group_id TEXT,
             date TEXT,
             duration INTEGER,
             name TEXT,
@@ -57,11 +58,12 @@ class Database:
         connection.commit()
         connection.close()
 
-    def insert_meeting(self, meet_id, admin_id, date, duration, name, description):
+    def insert_meeting(self, meet_id, admin_id, group_id, date, duration, name, description):
         '''
         Важно: смотреть на формат date!
         :param meet_id: int
         :param admin_id: str
+        :param group_id: str
         :param date: str, format '%Y-%m-%d %H:%M:%S'
         :param duration: int, minutes
         :param name: str
@@ -71,9 +73,9 @@ class Database:
         connection = self.get_connection()
         connection.execute(
             "INSERT INTO meetings "
-            "(meet_id, admin_id, date, duration, name, description) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (meet_id, admin_id, date, duration, name, description))
+            "(meet_id, admin_id, group_id, date, duration, name, description) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (meet_id, admin_id, group_id, date, duration, name, description))
         connection.commit()
         connection.close()
 

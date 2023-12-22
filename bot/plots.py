@@ -1,8 +1,5 @@
 import db_interaction
-
 import seaborn as sns
-
-import matplotlib.pyplot as plt
 import datetime
 
 
@@ -19,13 +16,14 @@ def get_datetime_format(date):
     return datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
 
 
-def plot_meeting_duration_distribution(db):
+def plot_meeting_duration_distribution(db, group_id):
     connection = db.get_connection()
     cursor = connection.cursor()
     cursor.execute('''SELECT date, SUM(duration)
                    FROM meetings
+                   WHERE group_id = ?
                    GROUP BY date
-                   ''')
+                   ''', (group_id,))
     week_ago, date_counts = get_last_week_dictionary()
     meeting_durations = cursor.fetchall()
     for date, summ in meeting_durations:
@@ -37,13 +35,14 @@ def plot_meeting_duration_distribution(db):
     ax.set(xlabel='Дата', ylabel='Суммарное время встреч(минуты)', title='Распределение времени встреч по датам')
 
 
-def plot_meeting_date_distribution(db):
+def plot_meeting_date_distribution(db, group_id):
     connection = db.get_connection()
     cursor = connection.cursor()
     cursor.execute('''SELECT date, COUNT(*) 
                    FROM meetings
+                   WHERE group_id = ?
                    GROUP BY date
-                   ''')
+                   ''', (group_id,))
     dates = cursor.fetchall()
 
     week_ago, date_counts = get_last_week_dictionary()
