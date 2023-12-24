@@ -28,6 +28,7 @@ def plot_meeting_duration_distribution(db, group_id):
                    GROUP BY date
                    ''', (group_id, week_ago))
     meeting_durations = cursor.fetchall()
+    connection.close()
     for date, summ in meeting_durations:
         dt = get_datetime_format(date)
         date_counts[dt.strftime('%d.%m')] = summ
@@ -47,6 +48,7 @@ def plot_meeting_date_distribution(db, group_id):
                    GROUP BY date
                    ''', (group_id, week_ago))
     dates = cursor.fetchall()
+    connection.close()
 
     for date, count in dates:
         dt = get_datetime_format(date)
@@ -71,6 +73,7 @@ def plot_user_stats(db, user):
     ''', (user, week_ago))
 
     user_meetings = cursor.fetchall()
+    connection.close()
 
     for date, duration in user_meetings:
         dt = get_datetime_format(date)
@@ -94,6 +97,7 @@ def plot_group_stats(db, group_id):
     ''', (week_ago, group_id))
 
     user_meetings = cursor.fetchall()
+    connection.close()
 
     for date, duration in user_meetings:
         dt = get_datetime_format(date)
@@ -119,6 +123,7 @@ def funfact_user(db, user_id):
     ''', (user_id, week_ago))
 
     meetings_times = [row[0] for row in cursor.fetchall()]
+    connection.close()
 
     minutes = sum(meetings_times)
     hours = minutes // 60
@@ -139,6 +144,7 @@ def funfact_group(db, group_id):
     ''', (week_ago, group_id))
 
     meetings_times = [row[0] for row in cursor.fetchall()]
+    connection.close()
 
     minutes = sum(meetings_times)
     hours = minutes // 60
