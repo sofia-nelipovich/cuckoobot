@@ -82,34 +82,6 @@ def plot_user_stats(db, user):
     ax.set(xlabel='Дата', ylabel='Продолжительность встреч (минуты)', title=f'Загруженность {user} за последнюю неделю')
 
 
-def plot_group_stats(db, group_id):
-    week_ago, date_counts = get_last_week_dictionary()
-
-    connection = db.get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute('''
-    SELECT date, duration
-    FROM meetings 
-    WHERE meetings.date >= ? AND group_id = ?
-    ''', (week_ago, group_id))
-
-    user_meetings = cursor.fetchall()
-    for row in user_meetings:
-        print(row)
-
-    for row in date_counts:
-        print(row)
-
-    for date, duration in user_meetings:
-        dt = get_datetime_format(date)
-        date_counts[dt.strftime('%d.%m')] += duration
-
-    ax = sns.barplot(x=date_counts.keys(), y=date_counts.values())
-
-    ax.set(xlabel='Дата', ylabel='Продолжительность встреч (минуты)', title=f'Загруженность за последнюю неделю')
-
-
 def funfact_user(db, user_id):
     connection = db.get_connection()
     cursor = connection.cursor()
