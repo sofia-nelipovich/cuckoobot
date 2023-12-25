@@ -16,8 +16,12 @@ main_menu_markup.add(
         callback_data="add_auto_group_event",
     ),
     InlineKeyboardButton(
-        text="Статистика Встреч",
+        text="Статистика встреч по количеству",
         callback_data="get_plot_date",
+    ),
+    InlineKeyboardButton(
+        text="Статистика по продолжительности",
+        callback_data="get_plot_duration",
     ),
 )
 
@@ -38,8 +42,8 @@ admin_main_menu_markup.add(
         callback_data="get_plot_date",
     ),
     InlineKeyboardButton(
-        text="Статистика встреч по продолжительности",
-        callback_data="get_plot_date",
+        text="Статистика по продолжительности",
+        callback_data="get_plot_duration",
     ),
 )
 

@@ -138,9 +138,9 @@ def funfact_user(db, user_id, user_name):
         FROM meetings 
         JOIN users 
         ON meetings.group_id = users.group_id 
-        WHERE users.user_id = ? AND meetings.date >= ?
+        WHERE users.user_id = ? AND meetings.date >= ? AND meetings.date <= ?
         """,
-        (user_id, week_ago),
+        (user_id, week_ago, datetime.datetime.now()),
     )
 
     meetings_times = [row[0] for row in cursor.fetchall()]
@@ -163,9 +163,9 @@ def funfact_group(db, group_id):
         """
         SELECT duration
         FROM meetings
-        WHERE date >= ? AND group_id = ?
+        WHERE date >= ? AND group_id = ? AND date <= ?
         """,
-        (week_ago, group_id),
+        (week_ago, group_id, datetime.datetime.now()),
     )
 
     meetings_times = [row[0] for row in cursor.fetchall()]
@@ -186,9 +186,9 @@ def funfact_popular_time(db, group_id):
         """
         SELECT meet_id, date 
         FROM meetings
-        WHERE group_id = ?
+        WHERE group_id = ? AND date <= ?
         """,
-        (group_id,),
+        (group_id, datetime.datetime.now()),
     )
     meetings = cursor.fetchall()
     connection.close()
