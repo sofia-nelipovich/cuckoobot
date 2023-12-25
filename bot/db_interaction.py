@@ -1,236 +1,228 @@
-import sqlite3
+import seaborn as sns
+import matplotlib.pyplot as plt
+import datetime
+import pandas as pd
+import io
 import random
-import string
-import uuid
 
 
-def generate_group_code():
-    return str(uuid.uuid4())
+def get_last_week_dictionary():
+    week_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+    dates = {}
+    for day in range(0, 8):
+        new_day = (week_ago + datetime.timedelta(days=day)).strftime("%d.%m")
+        dates[new_day] = 0
+    return week_ago, dates
 
 
-class Database:
-    def __init__(self, db_file):
-        self.db_file = db_file
-        self.init_db()
+def get_datetime_format(date):
+    return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
-    def get_connection(self):
-        return sqlite3.connect(self.db_file)
 
-    def init_db(self):
-        connection = self.get_connection()
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS meetings (
-            meet_id INTEGER,
-            group_id TEXT,
-            date TEXT,
-            duration INTEGER,
-            name TEXT,
-            description TEXT
-            )
-            """
-        )
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER, 
-            calendar_id TEXT,
-            group_id TEXT
-            )
-            """
-        )
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS groups (
-            group_id TEXT,
-            admin_id INTEGER,
-            name TEXT,
-            group_code TEXT
-            )
-            """
-        )
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS calendar_events (
-            meet_id INTEGER,
-            calendar_event_id TEXT
-            )
-            """
-        )
-        connection.commit()
-        connection.close()
+def get_random_fun_fact(db, user_id, group_id, user_name):
+    fun_fact_function = random.choice(
+        [funfact_user, funfact_group, funfact_popular_time]
+    )
 
-    def delete_database(self):
-        connection = self.get_connection()
-        c = connection.cursor()
-        c.execute("DROP TABLE IF EXISTS meetings")
-        c.execute("DROP TABLE IF EXISTS users")
-        c.execute("DROP TABLE IF EXISTS groups")
-        connection.commit()
-        connection.close()
+    if fun_fact_function == funfact_user:
+        return fun_fact_function(db, user_id, user_name)
+    else:
+        return fun_fact_function(db, group_id)
 
-    def insert_group_meeting(
-        self, meet_id, group_id, date, duration, name, description
-    ):
+
+def plot_meeting_duration_distribution(db, group_id):
+    week_ago, date_counts = get_last_week_dictionary()
+
+    connection = db.get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
+        """SELECT date, SUM(duration)
+                   FROM meetings
+                   WHERE group_id = ? AND date >= ?
+                   GROUP BY date
+                   """,
+        (group_id, week_ago),
+    )
+    meeting_durations = cursor.fetchall()
+    for date, summ in meeting_durations:
+        dt = get_datetime_format(date)
+        date_counts[dt.strftime("%d.%m")] = summ
+
+    ax = sns.barplot(x=date_counts.keys(), y=date_counts.values())
+    ax.set(
+        xlabel="Дата",
+        ylabel="Суммарное время встреч(минуты)",
+        title="Распределение времени встреч по датам",
+    )
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return buf
+
+
+def plot_meeting_date_distribution(db, group_id):
+    week_ago, date_counts = get_last_week_dictionary()
+
+    connection = db.get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
+        """SELECT date, COUNT(*) 
+                   FROM meetings
+                   WHERE group_id = ? AND date >= ?
+                   GROUP BY date
+                   """,
+        (group_id, week_ago),
+    )
+    dates = cursor.fetchall()
+
+    for date, count in dates:
+        dt = get_datetime_format(date)
+        date_counts[dt.strftime("%d.%m")] = count
+
+    ax = sns.barplot(x=list(date_counts.keys()), y=list(date_counts.values()))
+    ax.set(
+        xlabel="Дата", ylabel="Количество встреч", title="Распределение встреч по датам"
+    )
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return buf
+
+
+# def plot_user_stats(db, user):
+#     week_ago, date_counts = get_last_week_dictionary()
+
+#     connection = db.get_connection()
+#     cursor = connection.cursor()
+
+#     cursor.execute(
+#         """
+#         SELECT date, duration
+#         FROM meetings
+#         JOIN users
+#         ON meetings.group_id = users.group_id
+#         WHERE users.user_id = ? and meetings.date >= ?
+#     """,
+#         (user, week_ago),
+#     )
+
+#     user_meetings = cursor.fetchall()
+
+#     for date, duration in user_meetings:
+#         dt = get_datetime_format(date)
+#         date_counts[dt.strftime("%d.%m")] = duration
+
+#     ax = sns.barplot(x=date_counts.keys(), y=date_counts.values())
+
+#     ax.set(
+#         xlabel="Дата",
+#         ylabel="Продолжительность встреч (минуты)",
+#         title=f"Загруженность {user} за последнюю неделю",
+#     )
+#     return ax
+
+
+def funfact_user(db, user_id, user_name):
+    connection = db.get_connection()
+    cursor = connection.cursor()
+
+    week_ago, date_counts = get_last_week_dictionary()
+
+    cursor.execute(
         """
-        Важно: смотреть на формат date!
-        :param meet_id: int
-        :param group_id: str
-        :param date: str, format '%Y-%m-%d %H:%M:%S'
-        :param duration: int, minutes
-        :param name: str
-        :param description: str
-        :return: none
+    SELECT duration
+    FROM meetings 
+    JOIN users 
+    ON meetings.group_id = users.group_id 
+    WHERE users.user_id = ? AND meetings.date >= ?
+    """,
+        (user_id, week_ago),
+    )
+
+    meetings_times = [row[0] for row in cursor.fetchall()]
+    if len(meetings_times) == 0:
+        return f'У {user_name} не было встреч(\n'
+
+    minutes = sum(meetings_times)
+    hours = minutes // 60
+
+    return f"Фанфакт: за последнюю неделю {user_name} провел(а) {hours}ч{minutes - hours * 60}м на встречах!\nСамая длинная встреча длилась {max(meetings_times)} минут!"
+
+
+def funfact_group(db, group_id):
+    connection = db.get_connection()
+    cursor = connection.cursor()
+
+    week_ago, date_counts = get_last_week_dictionary()
+
+    cursor.execute(
         """
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            "INSERT INTO meetings "
-            "(meet_id, group_id, date, duration, name, description) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (meet_id, group_id, date, duration, name, description),
-        )
-        connection.commit()
-        connection.close()
+    SELECT duration
+    FROM meetings
+    WHERE date >= ? AND group_id = ?
+    """,
+        (week_ago, group_id),
+    )
 
-    def insert_calendar_event_id(self, meet_id, calendar_event_id):
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            "INSERT INTO calendar_events "
-            "(meet_id, calendar_event_id) "
-            "VALUES (?, ?)",
-            (meet_id, calendar_event_id),
-        )
-        connection.commit()
-        connection.close()
+    meetings_times = [row[0] for row in cursor.fetchall()]
+    if len(meetings_times) == 0:
+        return 'В вашей группе ещё не было встреч(\n'
 
-    def insert_user(self, user_id, calendar_id, group_id):
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            "INSERT OR REPLACE INTO users "
-            "(user_id, calendar_id, group_id) "
-            "VALUES (?, ?, ?)",
-            (user_id, calendar_id, group_id),
-        )
-        connection.commit()
-        connection.close()
+    minutes = sum(meetings_times)
+    hours = minutes // 60
 
-    def insert_group(self, group_id, member_id):
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        cursor.execute(
-            "INSERT OR REPLACE INTO groups " "(group_id) " "VALUES (?)",
-            (group_id, member_id),
-        )
-        connection.commit()
-        connection.close()
+    return f"Фанфакт: за последнюю неделю вы провели {hours}ч{minutes - hours * 60}м на встречах!\nСамая длинная встреча длилась {max(meetings_times)} минут!"
 
-    def get_calendar_id(self, user_id):
-        connection = self.get_connection()
-        cursor = connection.cursor()
-        cursor.execute("SELECT calendar_id FROM users WHERE user_id = ?", (user_id,))
-        row = cursor.fetchone()
-        connection.close()
-        return row[0] if row else None
 
-    def update_user_group(self, user_id, new_group_id):
-        connection = self.get_connection()
-        cursor = connection.cursor()
+def funfact_popular_time(db, group_id):
+    connection = db.get_connection()
+    cursor = connection.cursor()
 
-        # Update the group_id for the user
-        cursor.execute(
-            "UPDATE users SET group_id = ? WHERE user_id = ?", (new_group_id, user_id)
-        )
-        connection.commit()
-        connection.close()
-
-    def update_user_calendar_id(self, user_id, new_calendar_id):
-        connection = self.get_connection()
-        cursor = connection.cursor()
-
-        # Update the calendar_id for the user
-        cursor.execute(
-            "UPDATE users SET calendar_id = ? WHERE user_id = ?",
-            (new_calendar_id, user_id),
-        )
-        connection.commit()
-        connection.close()
-
-    def create_group(self, group_name, admin_id):
-        group_id = "".join(
-            random.choices(string.ascii_lowercase + string.digits, k=10)
-        )  # Уникальный ID группы
-        group_code = (
-            generate_group_code()
-        )  # 32 шестнадцатеричных цифры - секретный код для входа в группу
-
-        connection = self.get_connection()
-        connection.execute(
-            """
-            INSERT INTO groups (group_id, admin_id, name, group_code) 
-            VALUES (?, ?, ?, ?)
+    cursor.execute(
+        """
+        SELECT meet_id, date 
+        FROM meetings
+        WHERE group_id = ?
         """,
-            (group_id, admin_id, group_name, group_code),
-        )
-        connection.commit()
-        connection.close()
+        (group_id,),
+    )
+    meetings = cursor.fetchall()
+    connection.close()
+    if len(meetings) == 0:
+        return 'В вашей группе ещё не было встреч(\n'
 
-        return group_id, group_code
+    times = [0 for _ in range(24)]
+    days_of_week = [0 for _ in range(7)]
 
-    def get_user_group_id(self, user_id: int):
-        connection = self.get_connection()
-        cursor = connection.cursor()
+    popular_day_count = 0
+    popular_hour_count = 0
+    popular_day_ind = 0
+    popular_hour_ind = 0
 
-        cursor.execute("SELECT group_id FROM users WHERE user_id = ?", (user_id,))
-        group_id = cursor.fetchone()
+    for meet, date in meetings:
+        day_of_week = get_datetime_format(date).weekday()
+        hour = get_datetime_format(date).hour
 
-        connection.close()
-        return group_id[0] if group_id else None
+        days_of_week[day_of_week] += 1
+        times[hour] += 1
 
-    def join_group(self, user_id, group_code):
-        connection = self.get_connection()
-        cursor = connection.cursor()
+        if days_of_week[day_of_week] > popular_day_count:
+            popular_day_count = days_of_week[day_of_week]
+            popular_day_ind = day_of_week
+        if times[hour] > popular_hour_count:
+            popular_hour_count = times[hour]
+            popular_hour_ind = hour
 
-        cursor.execute(
-            "SELECT group_id FROM groups WHERE group_code = ?", (group_code,)
-        )
-        group_id = cursor.fetchone()
+    days_names = [
+        "понедельник",
+        "вторник",
+        "среда",
+        "четверг",
+        "пятница",
+        "суббота",
+        "восресенье",
+    ]
 
-        if group_id:
-            group_id = group_id[0]
-
-            cursor.execute(
-                "INSERT INTO users (user_id, calendar_id, group_id) VALUES (?, ?, ?)",
-                (user_id, "", group_id),
-            )
-            connection.commit()
-            connection.close()
-
-            return group_id
-        else:
-            connection.close()
-            return None
-
-    def get_users_and_calendar_ids_in_same_group(self, user_id: int):
-        connection = self.get_connection()
-        cursor = connection.cursor()
-
-        cursor.execute("SELECT group_id FROM users WHERE user_id = ?", (user_id,))
-        group_id = cursor.fetchone()
-        group_id = group_id[0]
-
-        all_users_in_groups = set()
-        cursor.execute(
-            "SELECT user_id, calendar_id FROM users WHERE group_id = ?", (group_id,)
-        )
-        users_calendar_data = cursor.fetchall()
-
-        connection.close()
-        return list(users_calendar_data)
-
-
-if __name__ == "__main__":
-    db = Database("meetings.db")
-    # print(db.get_users_id_in_group(403015108))
+    return f"Фанфакт: самый популярный день недели для встреч в вашей группе - {days_names[popular_day_ind]}, а самое популярное время - {popular_hour_ind} часов!\n"
