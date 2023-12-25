@@ -6,7 +6,7 @@ from googleapiclient.discovery import build
 
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
-CREDENTIALS_FILE = "serviece_creds.json"
+CREDENTIALS_FILE = "service_creds.json"
 
 
 class GoogleCalendar(object):

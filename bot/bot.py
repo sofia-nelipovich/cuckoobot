@@ -82,6 +82,29 @@ async def get_plot_date(callback_query: CallbackQuery):
     )
 
 
+@dp.callback_query_handler(lambda c: c.data == "get_plot_duration")
+async def get_plot_duration(callback_query: CallbackQuery):
+    uid = callback_query.from_user.id
+    group_id = db.get_current_group_id(uid)
+
+    plot_buffer = pg.plot_meeting_duration_distribution(db, group_id)
+
+    await bot.send_photo(
+        chat_id=uid,
+        photo=plot_buffer,
+    )
+
+    plot_buffer.close()
+
+    fun_fact_text = pg.get_random_fun_fact(
+        db, uid, group_id, callback_query.from_user.full_name
+    )
+
+    await bot.send_message(
+        chat_id=uid, text=fun_fact_text, reply_markup=kb.back_main_markup
+    )
+
+
 @dp.message_handler(commands=["start"])
 async def handle_start(message: types.Message):
     args = message.get_args()

@@ -36,17 +36,18 @@ def plot_meeting_duration_distribution(db, group_id):
     connection = db.get_connection()
     cursor = connection.cursor()
     cursor.execute(
-        """SELECT date, SUM(duration)
-                   FROM meetings
-                   WHERE group_id = ? AND date >= ?
-                   GROUP BY date
-                   """,
+        """
+        SELECT date, SUM(duration)
+        FROM meetings
+        WHERE group_id = ? AND date >= ?
+        GROUP BY date
+        """,
         (group_id, week_ago),
     )
     meeting_durations = cursor.fetchall()
     for date, summ in meeting_durations:
         dt = get_datetime_format(date)
-        date_counts[dt.strftime("%d.%m")] = summ
+        date_counts[dt.strftime("%d.%m")] += summ
 
     ax = sns.barplot(x=date_counts.keys(), y=date_counts.values())
     ax.set(
@@ -67,18 +68,19 @@ def plot_meeting_date_distribution(db, group_id):
     connection = db.get_connection()
     cursor = connection.cursor()
     cursor.execute(
-        """SELECT date, COUNT(*) 
-                   FROM meetings
-                   WHERE group_id = ? AND date >= ?
-                   GROUP BY date
-                   """,
+        """
+        SELECT date, COUNT(*) 
+        FROM meetings
+        WHERE group_id = ? AND date >= ?
+        GROUP BY date
+        """,
         (group_id, week_ago),
     )
     dates = cursor.fetchall()
 
     for date, count in dates:
         dt = get_datetime_format(date)
-        date_counts[dt.strftime("%d.%m")] = count
+        date_counts[dt.strftime("%d.%m")] += count
 
     ax = sns.barplot(x=list(date_counts.keys()), y=list(date_counts.values()))
     ax.set(
@@ -112,7 +114,7 @@ def plot_meeting_date_distribution(db, group_id):
 
 #     for date, duration in user_meetings:
 #         dt = get_datetime_format(date)
-#         date_counts[dt.strftime("%d.%m")] = duration
+#         date_counts[dt.strftime("%d.%m")] += duration
 
 #     ax = sns.barplot(x=date_counts.keys(), y=date_counts.values())
 
@@ -132,12 +134,12 @@ def funfact_user(db, user_id, user_name):
 
     cursor.execute(
         """
-    SELECT duration
-    FROM meetings 
-    JOIN users 
-    ON meetings.group_id = users.group_id 
-    WHERE users.user_id = ? AND meetings.date >= ?
-    """,
+        SELECT duration
+        FROM meetings 
+        JOIN users 
+        ON meetings.group_id = users.group_id 
+        WHERE users.user_id = ? AND meetings.date >= ?
+        """,
         (user_id, week_ago),
     )
 
@@ -159,16 +161,14 @@ def funfact_group(db, group_id):
 
     cursor.execute(
         """
-    SELECT duration
-    FROM meetings
-    WHERE date >= ? AND group_id = ?
-    """,
+        SELECT duration
+        FROM meetings
+        WHERE date >= ? AND group_id = ?
+        """,
         (week_ago, group_id),
     )
 
     meetings_times = [row[0] for row in cursor.fetchall()]
-    if len(meetings_times) == 0:
-        return 'В вашей группе ещё не было встреч(\n'
 
     minutes = sum(meetings_times)
     hours = minutes // 60

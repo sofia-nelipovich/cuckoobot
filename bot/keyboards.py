@@ -21,6 +21,28 @@ main_menu_markup.add(
     ),
 )
 
+admin_main_menu_markup = InlineKeyboardMarkup(row_width=1)
+admin_main_menu_markup.add(
+    InlineKeyboardButton(text="Мой календарь", callback_data="my_calendar"),
+    InlineKeyboardButton(
+        text="Добавить групповое событие", callback_data="add_group_event"
+    ),
+    InlineKeyboardButton(
+        text="Добавить групповое событие на свободное время",
+        callback_data="add_auto_group_event",
+    ),
+    InlineKeyboardButton("Добавить участника", callback_data="add_member"),
+    InlineKeyboardButton("Удалить участника", callback_data="remove_member"),
+    InlineKeyboardButton(
+        text="Статистика встреч по количеству",
+        callback_data="get_plot_date",
+    ),
+    InlineKeyboardButton(
+        text="Статистика встреч по продолжительности",
+        callback_data="get_plot_date",
+    ),
+)
+
 back_main_markup = InlineKeyboardMarkup().add(
     InlineKeyboardButton("Назад", callback_data="back_to_main_menu")
 )
@@ -136,22 +158,3 @@ def get_main_menu_keyboard_final():
         InlineKeyboardButton("Создать группу", callback_data="create_group"),
     )
     return main_menu_markup
-
-
-admin_main_menu_markup = InlineKeyboardMarkup(row_width=1)
-admin_main_menu_markup.add(
-    InlineKeyboardButton(text="Мой календарь", callback_data="my_calendar"),
-    InlineKeyboardButton(
-        text="Добавить групповое событие", callback_data="add_group_event"
-    ),
-    InlineKeyboardButton(
-        text="Добавить групповое событие на свободное время",
-        callback_data="add_auto_group_event",
-    ),
-    InlineKeyboardButton("Добавить участника", callback_data="add_member"),
-    InlineKeyboardButton("Удалить участника", callback_data="remove_member"),
-    InlineKeyboardButton(
-        text="Статистика Встреч",
-        callback_data="get_plot_date",
-    ),
-)
