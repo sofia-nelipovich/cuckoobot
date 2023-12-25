@@ -169,6 +169,8 @@ def funfact_group(db, group_id):
     )
 
     meetings_times = [row[0] for row in cursor.fetchall()]
+    if len(meetings_times) == 0:
+        return f'В вашей группе ещё не было встреч(\n'
 
     minutes = sum(meetings_times)
     hours = minutes // 60
