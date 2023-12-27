@@ -51,7 +51,7 @@ async def group_name_entered(message: types.Message, state: FSMContext):
     group_id, group_code = db.create_group(group_name, admin_id)
     db.update_user_group(admin_id, group_id)
     # Создание ссылки для присоединения к группе
-    join_link = f"https://t.me/cuckuu_bot?start={group_code}"
+    join_link = f"https://t.me/realcuckoo_bot?start={group_code}"
     await state.finish()
     await message.answer(
         f"✅ Группа '{group_name}' успешно создана! Вот ваша пригласительная ссылка: {join_link}",
@@ -853,14 +853,14 @@ async def back_to_menu(callback_query: CallbackQuery):
         await bot.edit_message_text(
             chat_id=callback_query.message.chat.id,
             message_id=callback_query.message.message_id,
-            text="Добро пожаловать в бота. Инфо о боте:",
+            text="👋 Добро пожаловать в бота!",
             reply_markup=kb.admin_main_menu_markup,
         )
     else:
         await bot.edit_message_text(
             chat_id=callback_query.message.chat.id,
             message_id=callback_query.message.message_id,
-            text="Добро пожаловать в бота. Инфо о боте:",
+            text="👋 Добро пожаловать в бота!",
             reply_markup=kb.main_menu_markup,
         )
 
@@ -872,14 +872,14 @@ async def back_to_menu(callback_query: CallbackQuery, state: FSMContext):
         await bot.edit_message_text(
             chat_id=callback_query.message.chat.id,
             message_id=callback_query.message.message_id,
-            text="Добро пожаловать в бота. Инфо о боте:",
+            text="👋 Добро пожаловать в бота!",
             reply_markup=kb.admin_main_menu_markup,
         )
     else:
         await bot.edit_message_text(
             chat_id=callback_query.message.chat.id,
             message_id=callback_query.message.message_id,
-            text="Добро пожаловать в бота. Инфо о боте:",
+            text="👋 Добро пожаловать в бота!",
             reply_markup=kb.main_menu_markup,
         )
 
@@ -1003,7 +1003,7 @@ async def process_group_event_creation(message: types.Message, state: FSMContext
 
                     await bot.send_message(
                         member_id,
-                        f"Админ изменил описание группового события: {message.text}",
+                        f"Создано новое групповое событие: {data['title']}",
                         reply_markup=event_link_markup,
                     )
 
@@ -1147,7 +1147,7 @@ async def process_auto_group_event_creation(message: types.Message, state: FSMCo
 async def add_member(callback_query: types.CallbackQuery):
     group_code = db.get_group_code(callback_query.from_user.id)
     if group_code:
-        invite_link = f"https://t.me/cuckuu_bot?start={group_code}"
+        invite_link = f"https://t.me/realcuckoo_bot?start={group_code}"
         await callback_query.message.answer(
             f"Пригласительная ссылка: {invite_link}", reply_markup=kb.back_main_markup
         )
@@ -1182,7 +1182,7 @@ async def remove_member(message: types.Message, state: FSMContext):
         )
     else:
         await message.answer(
-            "Не удалось удалить участника. Убедитесь, что вы админ и почта указана верно.",
+            "Не удалось удалить участника. Убедитесь, что почта указана верно.",
             reply_markup=kb.back_main_markup,
         )
     await state.finish()
